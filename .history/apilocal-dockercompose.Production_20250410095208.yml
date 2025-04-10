@@ -47,10 +47,9 @@ services:
       environment:
         - ASPNETCORE_ENVIRONMENT=DockerProduction
         - ASPNETCORE_Kestrel__Certificates__Default__Password=fevrips202
-        - ASPNETCORE_Kestrel__Certificates__Default__Path=/certificates/server.pfx
-        - DOMAIN=prodfevrips.duckdns.org
+        - ASPNETCORE_Kestrel__Certificates__Default__Path=/certificates/fevripsapilocal.pfx
       volumes:
-        - ./Certificates:/certificates
+        - C:\Certificates:/certificates
       networks:
         - fevrips-net
       depends_on:   

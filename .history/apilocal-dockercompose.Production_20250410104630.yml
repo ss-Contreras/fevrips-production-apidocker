@@ -50,7 +50,7 @@ services:
         - ASPNETCORE_Kestrel__Certificates__Default__Path=/certificates/server.pfx
         - DOMAIN=prodfevrips.duckdns.org
       volumes:
-        - ./Certificates:/certificates
+        - .Certificates:/certificates
       networks:
         - fevrips-net
       depends_on:   
