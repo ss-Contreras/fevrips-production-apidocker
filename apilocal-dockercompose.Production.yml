@@ -1,0 +1,66 @@
+# docker login -u puller -p KkzSsl1yqmCEvjiTvzmrSvcXqWEcAbHclVehxIJqdU+ACRC0WuUB crmspsgovcoprd.azurecr.io
+# docker-compose -f apilocal-dockercompose.Production.yml up -d
+
+
+networks:
+
+  fevrips-net:
+      driver: bridge
+
+
+services:
+
+  fevrips-db:
+      container_name: fevrips-db
+      image: mcr.microsoft.com/mssql/server:2022-CU12-ubuntu-22.04
+      deploy:
+          resources:
+              limits:
+                  cpus: '0.80'
+                  memory: 9G
+              reservations:
+                  cpus: '0.25'
+                  memory: 4G
+      environment:
+          - ACCEPT_EULA=Y
+          - MSSQL_SA_PASSWORD=FEVRIPS1*
+          - MSSQL_MEMORY_LIMIT_MB=9000
+          - MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+          - MSSQL_PID=Enterprise
+      networks:
+        - fevrips-net
+      ports:
+        - "11433:1433"
+  fevrips-api:
+      container_name: fevrips-api
+      image: crmspsgovcoprd.azurecr.io/production-fevrips-apilocal
+      deploy:
+          resources:
+              limits:
+                  cpus: '0.50'
+                  memory: 3G
+              reservations:
+                  cpus: '0.25'
+                  memory: 1G
+      ports:
+        - "9443:5100"
+      environment:
+        - ASPNETCORE_ENVIRONMENT=DockerProduction
+        - ASPNETCORE_Kestrel__Certificates__Default__Password=fevrips202
+        - ASPNETCORE_Kestrel__Certificates__Default__Path=/certificates/fevripsapilocal.pfx
+      volumes:
+        - C:\Certificates:/certificates
+      networks:
+        - fevrips-net
+      depends_on:   
+        - fevrips-db
+
+        # Versión: 1.3
+
+       #  Ajustes validaciones
+
+       # Se elimino la restricción de validación de 1000 paquetes en el lapso de una hora.
+       # La validación de la cantidad máxima de caracteres permitidos en el campo numAutorización se amplia de 20 a 30 caracteres en los RIPS.
+      
+
+
