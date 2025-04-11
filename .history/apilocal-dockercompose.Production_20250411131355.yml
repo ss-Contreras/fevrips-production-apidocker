@@ -1,0 +1,72 @@
+version: "3.8"
+
+networks:
+  fevrips-net:
+    driver: bridge
+
+services:
+
+  traefik:
+    image: traefik:v2.9
+    container_name: traefik
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=tuemail@dominio.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "9443:5100"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - "./letsencrypt:/letsencrypt"
+    networks:
+      - fevrips-net
+
+  fevrips-db:
+    container_name: fevrips-db
+    image: mcr.microsoft.com/mssql/server:2022-CU12-ubuntu-22.04
+    deploy:
+      resources:
+        limits:
+          cpus: "0.80"
+          memory: 9G
+        reservations:
+          cpus: "0.25"
+          memory: 4G
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=FEVRIPS1*
+      - MSSQL_MEMORY_LIMIT_MB=9000
+      - MSSQL_COLLATION=SQL_Latin1_General_CP1_CI_AS
+      - MSSQL_PID=Enterprise
+    networks:
+      - fevrips-net
+    ports:
+      - "11433:1433"
+
+  fevrips-api:
+    container_name: fevrips-api
+    image: crmspsgovcoprd.azurecr.io/production-fevrips-apilocal
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 3G
+        reservations:
+          cpus: "0.25"
+          memory: 1G
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.fevrips-api.rule=Host(`prodfevrips.duckdns.org`)"
+      - "traefik.http.routers.fevrips-api.entrypoints=web,websecure"
+      - "traefik.http.routers.fevrips-api.tls.certresolver=myresolver"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=DockerProduction
+    networks:
+      - fevrips-net
+    depends_on:
+      - fevrips-db
